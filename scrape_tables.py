@@ -60,6 +60,7 @@ def main():
     print(f"TOTAL SUM OF ALL NUMBERS: {total_sum}")
     print(f"Total numbers found: {len(all_numbers)}")
     print("="*60)
+    print(f"FINAL_TOTAL_SUM={int(total_sum)}")
     
     return total_sum
 
