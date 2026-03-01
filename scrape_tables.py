@@ -1,6 +1,8 @@
 from playwright.sync_api import sync_playwright
 import re
 
+from posthog import page
+
 # URLs for seeds 68-77
 BASE_URL = "https://datadash.iitmandi.co.in/table?seed="
 SEEDS = list(range(68, 78))  # 68 to 77
@@ -10,7 +12,8 @@ def extract_numbers_from_table(page):
     numbers = []
     
     # Get all table cells (td and th)
-    cells = page.locator("td, th").all()
+    # cells = page.locator("td, th").all()
+    cells = page.locator("table td").all()
     
     for cell in cells:
         text = cell.inner_text().strip()
@@ -32,7 +35,8 @@ def main():
     all_numbers = []
     
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        # browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
         page = browser.new_page()
         page.set_default_timeout(30000)
         
@@ -41,12 +45,22 @@ def main():
             print(f"Scraping {url}...")
             
             try:
-                page.goto(url, wait_until="networkidle")
-                page.wait_for_timeout(1000)  # Wait for any dynamic content
-                
+                # page.goto(url, wait_until="networkidle")
+                # # page.wait_for_timeout(1000)  # Wait for any dynamic content
+                # page.wait_for_selector("table")
+                # page.wait_for_timeout(1500)
+                # numbers = extract_numbers_from_table(page)
+                page.goto(url, wait_until="domcontentloaded")
+
+                # Wait until at least one table row appears
+                page.wait_for_selector("table tbody tr", timeout=10000)
+
+                # Extra small delay for safety
+                page.wait_for_timeout(1000)
+
                 numbers = extract_numbers_from_table(page)
                 seed_sum = sum(numbers)
-                
+                                
                 print(f"  Seed {seed}: Found {len(numbers)} numbers, sum = {seed_sum}")
                 all_numbers.extend(numbers)
                 total_sum += seed_sum
